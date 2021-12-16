@@ -47,7 +47,7 @@ class ElasticJobParametersDB(ElasticDB):
             indexPrefix = gConfig.getValue("%s/IndexPrefix" % section, CSGlobals.getSetup()).lower()
 
             # Connecting to the ES cluster
-            super(ElasticJobParametersDB, self).__init__(name, "WorkloadManagement/ElasticJobParametersDB", indexPrefix)
+            super().__init__(name, "WorkloadManagement/ElasticJobParametersDB", indexPrefix)
         except Exception as ex:
             self.log.error("Can't connect to ElasticJobParametersDB", repr(ex))
             raise RuntimeError("Can't connect to ElasticJobParametersDB")
@@ -63,6 +63,7 @@ class ElasticJobParametersDB(ElasticDB):
             self.log.always("Index created:", self.indexName)
 
         self.dslSearch = self._Search(self.indexName)
+        self.dslSearch.extra(track_total_hits=True)
 
     def getJobParameters(self, jobID, paramList=None):
         """Get Job Parameters defined for jobID.
@@ -99,7 +100,7 @@ class ElasticJobParametersDB(ElasticDB):
 
         s = self.dslSearch.query("bool", filter=self._Q("term", JobID=jobID))
 
-        res = s.execute()
+        res = s.scan()
 
         for hit in res:
             name = hit.Name
@@ -142,7 +143,7 @@ class ElasticJobParametersDB(ElasticDB):
         self.log.debug("Inserting parameters", "in %s: for job %s : %s" % (self.indexName, jobID, parameters))
 
         parametersListDict = [
-            {"JobID": jobID, "Name": parName, "Value": parValue, "_id": str(parName) + str(parValue)}
+            {"JobID": jobID, "Name": parName, "Value": parValue, "_id": str(jobID) + str(parName) + str(parValue)}
             for parName, parValue in parameters
         ]
 
