@@ -263,11 +263,10 @@ class Service(object):
             # As ES accepts raw data these monitoring fields are being sent here because they are time dependant.
             self.activityMonitoringReporter.addRecord(
                 {
-                    "timestamp": int(Time.toEpoch()),
-                    "host": Network.getFQDN(),
-                    "componentType": "service",
-                    "component": "_".join(self._name.split("/")),
-                    "componentLocation": self._cfg.getURL(),
+                    "Timestamp": int(Time.toEpoch()),
+                    "Host": Network.getFQDN(),
+                    "Component": "_".join(self._name.split("/")),
+                    "Location": self._cfg.getURL(),
                     "PendingQueries": self._threadPool.pendingJobs(),
                     "ActiveQueries": self._threadPool.numWorkingThreads(),
                     "RunningThreads": threading.activeCount(),
