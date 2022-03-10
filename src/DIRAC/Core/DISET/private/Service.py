@@ -248,6 +248,7 @@ class Service(object):
                 gLogger.exception(e)
                 gLogger.error("Missing property", prop[0])
                 value = "unset"
+        self.__reportThreadPoolContents
 
         for secondaryName in self._cfg.registerAlsoAs():
             gLogger.info("Registering %s also as %s" % (self._name, secondaryName))
@@ -258,6 +259,21 @@ class Service(object):
         # TODO: remove later
         pendingQueries = self._threadPool._work_queue.qsize()
         activeQuereies = len(self._threadPool._threads)
+        if self.activityMonitoring:
+            # As ES accepts raw data these monitoring fields are being sent here because they are time dependant.
+            self.activityMonitoringReporter.addRecord(
+                {
+                    "timestamp": int(Time.toEpoch()),
+                    "host": Network.getFQDN(),
+                    "componentType": "service",
+                    "component": "_".join(self._name.split("/")),
+                    "componentLocation": self._cfg.getURL(),
+                    "PendingQueries": self._threadPool.pendingJobs(),
+                    "ActiveQueries": self._threadPool.numWorkingThreads(),
+                    "RunningThreads": threading.activeCount(),
+                    "MaxFD": self.__maxFD,
+                }
+            )
         self.__maxFD = 0
 
     def getConfig(self):

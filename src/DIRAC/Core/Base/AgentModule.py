@@ -362,10 +362,10 @@ class AgentModule(object):
             signal.signal(signal.SIGALRM, signal.SIG_DFL)
             signal.alarm(watchdogInt)
         elapsedTime = time.time()
-        cpuStats = self._startReportToMonitoring()
+        initialWallTime, initialCPUTime, mem = self._startReportToMonitoring()
         cycleResult = self.__executeModuleCycle()
-        if cpuStats:
-            self._endReportToMonitoring(*cpuStats)
+        if initialWallTime and initialCPUTime:
+            cpuPercentage = self._endReportToMonitoring(initialWallTime, initialCPUTime)
         # Increment counters
         self.__moduleProperties["cyclesDone"] += 1
         # Show status
@@ -391,6 +391,8 @@ class AgentModule(object):
                         "host": Network.getFQDN(),
                         "componentType": "agent",
                         "component": "_".join(self.__moduleProperties["fullName"].split("/")),
+                        "memoryUsage": mem,
+                        "cpuPercentage": cpuPercentage,
                         "cycleDuration": elapsedTime,
                         "cycles": 1,
                     }
@@ -418,7 +420,7 @@ class AgentModule(object):
                 membytes = MemStat.VmB("VmRSS:")
                 if membytes:
                     mem = membytes / (1024.0 * 1024.0)
-                return (now, cpuTime)
+                return (now, cpuTime, mem)
             else:
                 return False
         except Exception:
